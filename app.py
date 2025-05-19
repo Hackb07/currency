@@ -15,23 +15,33 @@ def load_model():
 
 model = load_model()
 
-image_file = st.file_uploader("📤 Upload an image", type=["jpg", "jpeg", "png"])
+# Option to choose input method
+input_method = st.radio("Choose Image Input Method:", ("📤 Upload", "📷 Camera"))
 
-if image_file:
-    image = Image.open(image_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+if input_method == "📤 Upload":
+    image_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    if image_file:
+        image = Image.open(image_file)
 
-    with st.spinner("Detecting..."):
+elif input_method == "📷 Camera":
+    camera_image = st.camera_input("Take a picture")
+    if camera_image:
+        image = Image.open(camera_image)
+
+# Proceed if image is available
+if ('image' in locals()):
+    st.image(image, caption="🖼️ Input Image", use_column_width=True)
+
+    with st.spinner("🔍 Detecting objects..."):
         results = model(image)
-        result_img = results[0].plot()  # This is a NumPy array
+        result_img = results[0].plot()
 
-    # Show the result
     st.image(result_img, caption="🧠 Detection Result", use_column_width=True)
 
-    # Save as image
+    # Save detection result
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-        Image.fromarray(result_img).save(tmp.name)  # Convert NumPy to PIL before saving
+        Image.fromarray(result_img).save(tmp.name)
         st.download_button("📥 Download Output", data=open(tmp.name, "rb").read(), file_name="detected.jpg")
 
 else:
-    st.info("Please upload an image to begin detection.")
+    st.info("Please provide an image using Upload or Camera.")
